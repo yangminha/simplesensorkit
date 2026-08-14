@@ -1,36 +1,37 @@
 #  P5JS, Javascript example (P5JS, Javascript 예제)
 =============
 
-이 디렉토리에는 P5JS와 Javascript로 제공된 센서킷을 구동할 수 있는 간단한 예시가 들어가 있어요.
-This directory contains simple examples demonstrating how to use the provided sensor kit with JavaScript and p5.js.
+ - 이 디렉토리에는 P5JS와 Javascript로 제공된 센서킷을 구동할 수 있는 간단한 예시가 들어가 있어요.
+ - This directory contains simple examples demonstrating how to use the provided sensor kit with JavaScript and p5.js.
 
 ## - sensor_read.html
 -------------
-> Javascript로 만들어진 파일로, 제공된 센서킷의 기본 값이 어떻게 들어오는지 확인할 수 있어요.
-> A JavaScript example that allows you to check the raw values received from the sensor kit.
-![Alt text](/simplesensorkit/P5JS_webserial/sensor_read.png)
+ - Javascript로 만들어진 파일로, 제공된 센서킷의 기본 값이 어떻게 들어오는지 확인할 수 있어요.
+ - A JavaScript example that allows you to check the raw values received from the sensor kit.
+<img src="/simplesensorkit/P5JS_webserial/sensor_read.png"></img><br/>
 
 ## - sensor_p5js_minimal.html
 -------------
-> P5JS로 센서에서 들어오는 값이 그래픽으로 어떻게 변환될 수 있는지 확인할 수 있어요.
-> A p5.js example that demonstrates how incoming sensor values can be translated into graphics.
-![Alt text](/simplesensorkit/P5JS_webserial/sensor_p5js_minimal.png)
+  - P5JS로 센서에서 들어오는 값이 그래픽으로 어떻게 변환될 수 있는지 확인할 수 있어요.
+  - A p5.js example that demonstrates how incoming sensor values can be translated into graphics.
+<img src="/simplesensorkit/P5JS_webserial/sensor_p5js_minimal.png"></img><br/>
 
 ## 센서 값 설명
 -------------
 > 아래는 센서데이터를 저장하는 자바스크립트의 객체입니다.
 > The following JavaScript object stores the sensor data:
-  let sensorData = {
-    button1: false,
-    button2: false,
-    analog1: '512',
-    analog2: '512',
-    analog3: '512',
-    vlActive: false,
-    distanceMm: '400',
-    tiltX: '0',
-    tiltY: '0'
-  };
+
+    let sensorData = {
+      button1: false,
+      button2: false,
+      analog1: '512',
+      analog2: '512',
+      analog3: '512',
+      vlActive: false,
+      distanceMm: '400',
+      tiltX: '0',
+      tiltY: '0'
+    };
   
 ### sensorData.button1
   - 왼쪽 버튼 : 값 true / false
