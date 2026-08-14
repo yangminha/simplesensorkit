@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Black &amp; White Sensor Shapes</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    canvas { display: block; }
+
+    button {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1;
+      padding: 10px 16px;
+      border: 2px solid #000;
+      border-radius: 0;
+      background: #fff;
+      color: #000;
+      font: 700 13px system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #000;
+      color: #fff;
+      cursor: default;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/p5@2.3.1/lib/p5.min.js"></script>
+</head>
+<body>
+<script>
+  let port;
+  let connectButton;
+  let keepReading = false;
+  let sensorData = {
+    button1: false,
+    button2: false,
+    analog1: '512',
+    analog2: '512',
+    analog3: '512',
+    vlActive: false,
+    distanceMm: '400',
+    tiltX: '0',
+    tiltY: '0'
+  };
+
+  function setup() {
+    createCanvas(windowWidth, windowHeight);
+    pixelDensity(1);
+    rectMode(CENTER);
+    connectButton = createButton('CONNECT');
+    connectButton.mousePressed(connectSerial);
+  }
+
+  function draw() {
+    const a1 = constrain(numberValue(sensorData.analog1, 512), 0, 1023);
+    const a2 = constrain(numberValue(sensorData.analog2, 512), 0, 1023);
+    const a3 = constrain(numberValue(sensorData.analog3, 512), 0, 1023);
+    const tiltX = constrain(numberValue(sensorData.tiltY, 0), -20000, 20000);
+    const tiltY = constrain(numberValue(sensorData.tiltX, 0), -20000, 20000);
+    const distance = constrain(numberValue(sensorData.distanceMm, 0), 0, 1200);
+    const potSizes = [a1, a2, a3].map(value => map(value, 0, 1023, 0, 255));
+    const distanceWidth = sensorData.vlActive ? map(distance, 0, 1200, 0, 500) : 0;
+    const tiltXPos = map((tiltX), -20000, 20000, -150, 150);
+    const tiltYPos = map((tiltY), -20000, 20000, -150, 150);
+
+    background(255);
+    noStroke();
+    textFont('system-ui');
+    textAlign(CENTER, CENTER);
+
+    // Keep the complete interface centered and shrink it only on small screens.
+    const interfaceWidth = 1080;
+    const interfaceHeight = 520;
+    const interfaceScale = min(1, (width - 32) / interfaceWidth, (height - 32) / interfaceHeight);
+
+    push();
+    translate(width / 2, height*1/4.0);
+    scale(interfaceScale);
+    translate(0, -interfaceHeight / 2);
+
+    const firstRowY = 138;
+    const firstRowLabelY = 288;
+    const firstRowX = [-450, -240, 0, 240, 450];
+
+    // First row: button 1, three potentiometers, and button 2.
+    fill(sensorData.button1 ? color(255, 0, 0) : color(0));
+    circle(firstRowX[0], firstRowY, 72);
+    drawLabel(`BUTTON 1  ·  ${sensorData.button1 ? 'ON' : 'OFF'}`, firstRowX[0], firstRowLabelY);
+
+    fill(0);
+    for (let i = 0; i < 3; i++) {
+      circle(firstRowX[i + 1], firstRowY, potSizes[i]);
+      drawLabel(`POT ${i + 1}  ·  ${round([a1, a2, a3][i])}`, firstRowX[i + 1], firstRowLabelY);
+    }
+
+    fill(sensorData.button2 ? color(0, 255, 255) : color(0));
+    circle(firstRowX[4], firstRowY, 72);
+    drawLabel(`BUTTON 2  ·  ${sensorData.button2 ? 'ON' : 'OFF'}`, firstRowX[4], firstRowLabelY);
+
+    // Second row: distance changes the width of one centered rectangle.
+    const distanceY = 480;
+    fill(0);
+    rectMode(CORNER);
+    stroke(0);
+    fill(255);
+    rect(-500, distanceY, 500, 40);
+    fill(0);
+    rect(-500, distanceY, distanceWidth, 40);
+    const distanceText = sensorData.vlActive ? `${round(distance)} mm` : 'N/A';
+    drawLabel(`DISTANCE : ${distanceText}`, -450, distanceY + 62);
+
+    rectMode(CENTER);
+    // Third row: tilt X and Y change the lengths of two rectangles.
+    const tiltYRow = 500;
+    stroke(0);
+    fill(255);
+    rect(220, tiltYRow, 300, 40);
+    rect(450, tiltYRow, 40, 300);
+    fill(0);
+    rect(220+tiltXPos, tiltYRow, 5, 40);
+    rect(450, tiltYRow+tiltYPos, 40, 5);//
+    drawLabel(`TILT X : ${round(tiltX)}`, 220, tiltYRow + 35);
+    drawLabel(`TILT Y : ${round(tiltY)}`, 450, tiltYRow + 165);
+    pop();
+  }
+
+  function drawLabel(label, x, y) {
+    fill(0);
+    textSize(13);
+    textStyle(NORMAL);
+    text(label, x, y);
+  }
+
+  function numberValue(value, fallback) {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+  }
+
+  async function connectSerial() {
+    if (!('serial' in navigator)) {
+      connectButton.html('WEB SERIAL UNSUPPORTED');
+      return;
+    }
+
+    try {
+      port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 38400 });
+      keepReading = true;
+      connectButton.attribute('disabled', '');
+      connectButton.html('CONNECTED');
+      await readSerial();
+    } catch (error) {
+      connectButton.html('TRY AGAIN');
+      connectButton.removeAttribute('disabled');
+      console.error(error);
+    }
+  }
+
+  async function readSerial() {
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (port?.readable && keepReading) {
+      const reader = port.readable.getReader();
+      try {
+        while (keepReading) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            try {
+              sensorData = { ...sensorData, ...JSON.parse(line) };
+            } catch {
+              // Ignore startup messages and incomplete non-JSON lines.
+            }
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        keepReading = false;
+        connectButton.html('DISCONNECTED');
+        connectButton.removeAttribute('disabled');
+      } finally {
+        reader.releaseLock();
+      }
+    }
+  }
+</script>
+</body>
+</html>

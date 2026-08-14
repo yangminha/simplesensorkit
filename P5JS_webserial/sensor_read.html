@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arduino Web Serial Monitor</title>
+  <style>
+    body { max-width: 760px; margin: 40px auto; padding: 0 20px; font-family: system-ui, sans-serif; }
+    button { padding: 10px 18px; font-size: 16px; cursor: pointer; }
+    #status { margin-left: 12px; color: #555; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 24px; }
+    .card { padding: 16px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa; }
+    .label { color: #666; font-size: 14px; }
+    .value { margin-top: 6px; font-size: 24px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Arduino Sensor Data</h1>
+  <button id="connect">Connect</button><span id="status">Not Connected</span>
+
+  <div class="grid">
+    <div class="card"><div class="label">Button 1</div><div class="value" id="button1">-</div></div>
+    <div class="card"><div class="label">Button 2</div><div class="value" id="button2">-</div></div>
+    <div class="card"><div class="label">Potentiometer 1</div><div class="value" id="analog1">-</div></div>
+    <div class="card"><div class="label">Potentiometer 2</div><div class="value" id="analog2">-</div></div>
+    <div class="card"><div class="label">Potentiometer 3</div><div class="value" id="analog3">-</div></div>
+    <div class="card"><div class="label">Distance Sensor Status</div><div class="value" id="vlActive">-</div></div>
+    <div class="card"><div class="label">Distance</div><div class="value" id="distanceMm">-</div></div>
+    <div class="card"><div class="label">Tilt X</div><div class="value" id="tiltX">-</div></div>
+    <div class="card"><div class="label">Tilt Y</div><div class="value" id="tiltY">-</div></div>
+  </div>
+
+  <script>
+    const connectButton = document.querySelector('#connect');
+    const statusText = document.querySelector('#status');
+    let port;
+    let keepReading = false;
+
+    function show(data) {
+      document.querySelector('#button1').textContent = data.button1 ? 'ON' : 'OFF';
+      document.querySelector('#button2').textContent = data.button2 ? 'ON' : 'OFF';
+      document.querySelector('#analog1').textContent = data.analog1;
+      document.querySelector('#analog2').textContent = data.analog2;
+      document.querySelector('#analog3').textContent = data.analog3;
+      document.querySelector('#vlActive').textContent = data.vlActive ? 'Active' : 'Out of Range';
+      document.querySelector('#distanceMm').textContent = data.vlActive ? `${data.distanceMm} mm` : 'N/A';
+      document.querySelector('#tiltX').textContent = data.tiltX;
+      document.querySelector('#tiltY').textContent = data.tiltY;
+    }
+
+    async function readSerial() {
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (port.readable && keepReading) {
+        const reader = port.readable.getReader();
+        try {
+          while (keepReading) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop();
+
+            for (const line of lines) {
+              try {
+                show(JSON.parse(line));
+              } catch {
+                // Arduino startup/debug messages are not JSON, so ignore them.
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      }
+    }
+
+    connectButton.addEventListener('click', async () => {
+      if (!('serial' in navigator)) {
+        statusText.textContent = 'This Browser does not support Web Serial.';
+        return;
+      }
+
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 38400 });
+        keepReading = true;
+        connectButton.disabled = true;
+        statusText.textContent = 'Connected';
+        await readSerial();
+      } catch (error) {
+        statusText.textContent = `Connection Error: ${error.message}`;
+        connectButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
