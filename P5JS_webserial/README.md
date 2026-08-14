@@ -59,7 +59,7 @@ This directory contains simple examples demonstrating how to use the provided se
 > It returns true when an object is within range and a valid distance measurement is available.
 
 # sensorData.distanceMm
-> 거리데이터 : 유효 값 50~600cm
+> 거리데이터 : 유효 값 50 ~ 600cm
 > 값은 미터법의 cm를 기준으로 처리되어 입력됩니다.
 > Distance data : Valid range 50~600cm
 > The value is provided in centimeters using the metric system.
