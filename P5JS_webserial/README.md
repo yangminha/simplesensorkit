@@ -31,12 +31,12 @@ This directory contains simple examples demonstrating how to use the provided se
   };
   
 #### sensorData.button1
-> 왼쪽 버튼 : 값 true / false
-> Left button : Value true / false
+  왼쪽 버튼 : 값 true / false
+  Left button : Value true / false
 
 #### sensorData.button2
-> 오른쪽 버튼 : 값 true / false
-> Right button : Value true / false
+  오른쪽 버튼 : 값 true / false
+  Right button : Value true / false
 
 #### sensorData.analog1
 > 1번 가변저항 : 값 0 ~ 1023
