@@ -8,13 +8,13 @@
 -------------
  - Javascript로 만들어진 파일로, 제공된 센서킷의 기본 값이 어떻게 들어오는지 확인할 수 있어요.
  - A JavaScript example that allows you to check the raw values received from the sensor kit.
-<img src="/simplesensorkit/P5JS_webserial/sensor_read.png"></img><br/>
+br /><img src="sensor_read.png"></img><br/>
 
 ## - sensor_p5js_minimal.html
 -------------
   - P5JS로 센서에서 들어오는 값이 그래픽으로 어떻게 변환될 수 있는지 확인할 수 있어요.
   - A p5.js example that demonstrates how incoming sensor values can be translated into graphics.
-<img src="/simplesensorkit/P5JS_webserial/sensor_p5js_minimal.png"></img><br/>
+<br /><img src="sensor_p5js_minimal.png"></img><br/>
 
 ## 센서 값 설명
 -------------
