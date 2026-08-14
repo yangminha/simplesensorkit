@@ -3,6 +3,11 @@
 #include "Wire.h"
 #include "Adafruit_VL53L0X.h"
 
+// You have to install libraries below
+// >> MPU6050 by Electronic Cats -  Gyroscope Sensor
+// >> Adafruit VL53L0X Library - Distance Sensor
+
+
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 MPU6050 mpu;
 
@@ -17,17 +22,17 @@ bool bInput[2];
 
 void setup() {
   Wire.begin();
-  Serial.begin(38400); // 시리얼 모니터 속도
+  Serial.begin(38400);
+
   Serial.println("Initializing I2C devices...");
   mpu.initialize();
   Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
-  // 센서 초기화 확인
   if (!lox.begin()) {
-    Serial.println(F("VL53L0X 센서를 찾을 수 없습니다. 배선을 확인하세요!"));
+    Serial.println(F("VL53L0X sensor not found!"));
     while(1);
   }
-  Serial.println(F("VL53L0X 센서 초기화 완료!"));
+  Serial.println(F("VL53L0X initialized!"));
 
   pinMode(5, INPUT);
   pinMode(4, INPUT);
@@ -36,15 +41,10 @@ void setup() {
 }
 
 void loop() {
-  // 가속도와 자이로 값 읽기
+  
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-
-
-
-
     
-  lox.rangingTest(&measure, false); // 측정 실행
-
+  lox.rangingTest(&measure, false);
 
   if (digitalRead(5)==HIGH) {
     bInput[0]=false;
@@ -62,20 +62,13 @@ void loop() {
   aInput[1] = analogRead(A2);
   aInput[2] = analogRead(A3);
 
-#if 1
   sendData();
-#else
-  debugPrint();
-#endif
-
   delay(100);
 }
 
 void sendData() {
-  // RangeStatus 4 means that the target is out of measurement range.
+  // Send data via serial port
   vlActive = (measure.RangeStatus != 4);
-
-  // Send one JSON object per line so Web Serial can safely separate samples.
   Serial.print(F("{\"button1\":"));
   Serial.print(bInput[0] ? F("true") : F("false"));
   Serial.print(F(",\"button2\":"));
@@ -97,31 +90,3 @@ void sendData() {
   Serial.println(F("}"));
 }
 
-void debugPrint() {
-
-  if (measure.RangeStatus != 4) { // Status 4는 측정 범위를 벗어난 경우
-    vlActive = true;
-    Serial.print(measure.RangeMilliMeter);
-    Serial.print("mm / ");
-  } else {
-    vlActive = false;
-    Serial.print("N/A    / ");
-  }
-    
-  // 시리얼 모니터에 값 출력
-  Serial.print("\t");
-  Serial.print(ax); Serial.print("\t");
-  Serial.print(ay); Serial.print("\t");
-  Serial.print(az); Serial.print("\t");
-  Serial.print(gx); Serial.print("\t");
-  Serial.print(gy); Serial.print("\t");
-  Serial.print(gz);
-
-  Serial.print("\t");
-  Serial.print(bInput[0]); Serial.print("\t");
-  Serial.print(bInput[1]); Serial.print("\t");
-  Serial.print(aInput[0]); Serial.print("\t");
-  Serial.print(aInput[1]); Serial.print("\t");
-  Serial.println(aInput[2]);
-
-}
